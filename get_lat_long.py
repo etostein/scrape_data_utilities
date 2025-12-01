@@ -42,6 +42,21 @@ for siteid in site_ids:
         street_code = address[14].text.strip()
         city = address[17].text.strip()
         province = address[18].text.strip()
+
+            # Replace "null" with empty string
+        # Replace "null" with empty string
+        if house_number.lower() == "null":
+            house_number = ""
+        if street_name.lower() == "null":
+            street_name = ""
+        if street_code.lower() == "null":
+            street_code = ""
+        if city.lower() == "null":
+            city = ""
+        if province.lower() == "null":
+            province = ""
+
+
         full_Address = house_number + " " + street_name + " " + street_code + " " + city + " " + province
 
         results.append({
