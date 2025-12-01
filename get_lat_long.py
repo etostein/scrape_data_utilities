@@ -17,6 +17,9 @@ with open('site_ids.csv', 'r') as f:
 
 print(f"Loaded {len(site_ids)} site IDs: {site_ids}") 
 
+results = []  # Move this HERE, before the loop
+record_id = 1
+
 for siteid in site_ids:
     print(f"\nProcessing: '{siteid}' (length: {len(siteid)})") 
     try:
@@ -41,9 +44,24 @@ for siteid in site_ids:
         province = address[18].text.strip()
         full_Address = house_number + " " + street_name + " " + street_code + " " + city + " " + province
 
-
+        results.append({
+            'Id': record_id,
+            'Site Number': siteid_i,
+            'Latitude': latitude,
+            'Longitude': longitude,
+            'Full Address': full_Address
+        })
+        record_id += 1
         print(f"Site ID: {siteid_i}, Lat: {latitude}, Long: {longitude}, Address: {full_Address}")
 
     except Exception as e:
         print(f"✗ Error with {siteid}: {e}")
     time.sleep(0.5)
+
+#savve to CSV
+with open('updated_collection.csv', 'w', newline='', encoding='utf-8') as f:
+    writer = csv.DictWriter(f, fieldnames=['Id', 'Site Number', 'Latitude', 'Longitude', 'Full Address'])
+    writer.writeheader()
+    writer.writerows(results)
+
+print(f"\nSaved {len(results)} records to updated_collection.csv")
