@@ -71,7 +71,7 @@ for siteid in site_ids:
 
     except Exception as e:
         print(f"✗ Error with {siteid}: {e}")
-    time.sleep(0.5)
+    time.sleep(1)
 
 #savve to CSV
 with open('updated_collection.csv', 'w', newline='', encoding='utf-8') as f:
