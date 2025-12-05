@@ -1,0 +1,4 @@
+# Environment files with credentials
+preprod.env
+prod.env
+*.env

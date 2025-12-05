@@ -12,7 +12,8 @@ with open('site_ids.csv', 'r') as f:
     next(reader)  
     for row in reader:
         #add leading zeros to make sure siteid is 14 characters long
-        siteid = row[0].strip() #add if needs to add 00 at the beginning .zfill(13)
+         #add if needs to add 00 at the beginning .zfill(13)
+        siteid = row[0].strip().zfill(13)
         site_ids.append(siteid)
 
 print(f"Loaded {len(site_ids)} site IDs: {site_ids}") 

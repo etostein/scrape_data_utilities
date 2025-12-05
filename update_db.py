@@ -1,13 +1,18 @@
 import csv
+import os
 import psycopg2
 import time
+from dotenv import load_dotenv
+
+
+load_dotenv('preprod.env')
 
 # Connect to your DB
 conn = psycopg2.connect(
-    host="postgres-preprod.cuqksc7ydqcp.ca-central-1.rds.amazonaws.com",
-    database="wfms_workorderexecution",
-    user="admin_user",
-    password="bK9FHzzciVgYin4Lg2NG"
+    host=os.getenv('DB_HOST'),
+    database=os.getenv('DB_NAME'),
+    user=os.getenv('DB_USER'),
+    password=os.getenv('DB_PASSWORD')
 )
 
 cursor = conn.cursor()
@@ -64,7 +69,7 @@ with open('updated_collection.csv', 'r') as f:
     print(f"Errors/No match: {error_count}")
     print(f"Time elapsed: {elapsed_time:.2f} seconds")
     print(f"{'='*50}")
-    
+
     response = input(f"\nUpdated {success_count} records, {error_count} errors. Commit? (yes/no): ")
     if response.lower() == 'yes':
         conn.commit()
