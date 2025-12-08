@@ -2,12 +2,19 @@ from bs4 import BeautifulSoup
 import requests
 import csv
 import time
+import os
 headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
 } 
 
+# Get the directory where the script is located
+script_dir = os.path.dirname(os.path.abspath(__file__))
+
+# Build the full path to site_ids.csv
+csv_path = os.path.join(script_dir, 'site_ids.csv')
+
 site_ids = []
-with open('site_ids.csv', 'r') as f:
+with open(csv_path, 'r') as f:
     reader = csv.reader(f)
     next(reader)  
     for row in reader:
@@ -74,10 +81,12 @@ for siteid in site_ids:
         print(f"✗ Error with {siteid}: {e}")
     time.sleep(1)
 
-#savve to CSV
-with open('updated_collection.csv', 'w', newline='', encoding='utf-8') as f:
+#save to CSV
+
+output_path = os.path.join(script_dir, 'updated_collection.csv')
+with open(output_path, 'w', newline='', encoding='utf-8') as f:
     writer = csv.DictWriter(f, fieldnames=['Id', 'Site Number', 'Latitude', 'Longitude', 'Full Address'])
     writer.writeheader()
     writer.writerows(results)
 
-print(f"\nSaved {len(results)} records to updated_collection.csv")
+print(f"\nSaved {len(results)} records to {output_path}")

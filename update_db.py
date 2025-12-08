@@ -5,7 +5,14 @@ import time
 from dotenv import load_dotenv
 
 
-load_dotenv('preprod.env')
+# Get the directory where the script is located
+script_dir = os.path.dirname(os.path.abspath(__file__))
+
+# Load env file from script directory
+env_path = os.path.join(script_dir, 'prod.env')
+
+print(f"Looking for env file at: {env_path}")
+load_dotenv(env_path)
 
 # Connect to your DB
 conn = psycopg2.connect(
