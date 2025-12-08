@@ -25,7 +25,8 @@ with open(csv_path, 'r') as f:
 
 print(f"Loaded {len(site_ids)} site IDs: {site_ids}") 
 
-results = []  # Move this HERE, before the loop
+
+results = []  
 record_id = 1
 
 for siteid in site_ids:
