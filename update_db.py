@@ -8,11 +8,24 @@ from dotenv import load_dotenv
 # Get the directory where the script is located
 script_dir = os.path.dirname(os.path.abspath(__file__))
 
+
+csv_path = os.path.join(script_dir, 'updated_collection.csv')
+
+old_csv_path = os.path.join(script_dir, 'old_address.csv')
 # Load env file from script directory
-env_path = os.path.join(script_dir, 'prod.env')
+env_path = os.path.join(script_dir, 'preprod.env')
 
 print(f"Looking for env file at: {env_path}")
 load_dotenv(env_path)
+old_addresses = {}
+with open(old_csv_path, 'r') as f:
+    reader = csv.DictReader(f)
+    for row in reader:
+        site_number = row['Site Number'].strip()
+        old_addresses[site_number] = row['Old Address']
+
+print(f"Loaded {len(old_addresses)} old addresses")
+
 
 # Connect to your DB
 conn = psycopg2.connect(
@@ -25,7 +38,9 @@ conn = psycopg2.connect(
 cursor = conn.cursor()
 
 # Read CSV
-with open('updated_collection.csv', 'r') as f:
+print(f"Reading from: {csv_path}")
+
+with open(csv_path, 'r') as f:
     reader = csv.DictReader(f)
     
     
@@ -35,8 +50,10 @@ with open('updated_collection.csv', 'r') as f:
     start_time = time.time()
     
     for row in reader:
+        total_rows += 1
         try:
-
+            old_address = old_addresses.get(site_number, '')
+            new_address = row["Full Address"]
             site_number = row['Site Number'].strip().zfill(13)
 
             # Update the JSON fields in the database
@@ -57,8 +74,53 @@ with open('updated_collection.csv', 'r') as f:
             ))
             
             if cursor.rowcount > 0:
+                cursor.execute("""
+                    WITH new_history AS (
+                        INSERT INTO public."Histories" (
+                            "WorkOrderId",
+                            "TaskName",
+                            "UserName",
+                            "ActivityTypeId",
+                            "ActivityDetailId",
+                            "PostProcessingId",
+                            "TimeStamp",
+                            "Name"
+                        )
+                        SELECT
+                            wo."Id" as "WorkOrderId",
+                            null as "TaskName",
+                            'Position_updated' as "UserName",
+                            -17 as "ActivityTypeId",
+                            5 as "ActivityDetailId",
+                            null as "PostProcessingId",
+                            NOW() as "TimeStamp",
+                            'STORY_' || gen_random_uuid()::text as "Name"
+                        FROM public."WorkOrder" wo
+                        WHERE wo."JsonData" -> 'WorkOrder' ->> 'WorkOrderId' = %s
+                        RETURNING "Id", "WorkOrderId"
+                    )
+                    INSERT INTO public."AuditLogs" (
+                        "HistoryId",
+                        "FieldName",
+                        "OldValue",
+                        "NewValue",
+                        "TimeStamp",
+                        "Name"
+                    )
+                    SELECT
+                        nh."Id" as "HistoryId",
+                        'Contact.Address' as "FieldName",
+                        %s as "OldValue",
+                        %s as "NewValue",
+                        NOW() as "TimeStamp",
+                        'AUDITLOG_' || gen_random_uuid()::text as "Name"
+                    FROM new_history nh
+                """, (site_number, old_address, new_address))
+                
                 success_count += 1
                 print(f"Updated {site_number}")
+                print(f"  Old: {old_address}")
+                print(f"  New: {new_address}")
             else:
                 error_count += 1
                 print(f"No match for {site_number}")
