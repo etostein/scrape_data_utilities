@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 script_dir = os.path.dirname(os.path.abspath(__file__))
 
 # Load database credentials
-env_path = os.path.join(script_dir, 'preprod.env')
+env_path = os.path.join(script_dir, 'prod.env')
 load_dotenv(env_path)
 
 # Build the full path to site_ids.csv
@@ -42,7 +42,9 @@ try:
             wo."JsonData" -> 'WorkOrder'->>'WorkOrderId' as site_number,
             ST_AsText(wo."Position") as old_position_geometry,
         
-            wo."JsonData" -> 'Contact' ->> 'Address' as old_address
+            wo."JsonData" -> 'Contact' ->> 'Address' as old_address,
+            WO."JsonData" -> 'ServicePoint'->>'Latitude',
+            WO."JsonData" -> 'ServicePoint'->>'Longitude'
         FROM public."WorkOrder" wo
         WHERE wo."JsonData" -> 'WorkOrder'->> 'WorkOrderId' = ANY(%s)
     """, (site_ids,))
@@ -53,7 +55,7 @@ try:
     old_csv_path = os.path.join(script_dir, 'old_address.csv')
     with open(old_csv_path, 'w', newline='', encoding='utf-8') as f:
         writer = csv.writer(f)
-        writer.writerow(['Site Number', 'Old Position Geometry', 'Old Address'])
+        writer.writerow(['Site Number', 'Old Position Geometry', 'Old Address', 'Old Latitude', 'Old Longitude'])
         writer.writerows(old_data)
     
     print(f" Saved {len(old_data)} old records to {old_csv_path}")

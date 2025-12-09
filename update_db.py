@@ -13,7 +13,7 @@ csv_path = os.path.join(script_dir, 'updated_collection.csv')
 
 old_csv_path = os.path.join(script_dir, 'old_address.csv')
 # Load env file from script directory
-env_path = os.path.join(script_dir, 'preprod.env')
+env_path = os.path.join(script_dir, 'prod.env')
 
 print(f"Looking for env file at: {env_path}")
 load_dotenv(env_path)
@@ -55,21 +55,34 @@ with open(csv_path, 'r') as f:
             old_address = old_addresses.get(site_number, '')
             new_address = row["Full Address"]
             site_number = row['Site Number'].strip().zfill(13)
+            latitude = row['Latitude']
+            longitude = row['Longitude']
 
             # Update the JSON fields in the database
             cursor.execute("""
                 UPDATE public."WorkOrder"
                 SET "JsonData" = jsonb_set(
-                    "JsonData",
-                    '{Contact,Address}',
+                    jsonb_set(
+                        jsonb_set(
+                            "JsonData",
+                            '{Contact,Address}',
+                            %s::jsonb
+                        ),
+                        '{ServicePoint,Latitude}',
+                        %s::jsonb
+                    ),
+                    '{ServicePoint,Longitude}',
                     %s::jsonb
                 ),
-                  "Position" = ST_SetSRID(ST_MakePoint(%s, %s), 4326)         
+                  "Position" = ST_SetSRID(ST_MakePoint(%s, %s), 4326),
+                   "PositionSRID" = 4326                 
                 WHERE "JsonData"->'WorkOrder'->>'WorkOrderId' = %s
             """, (
-                f'"{row["Full Address"]}"',
-                float(row["Longitude"]),
-                float(row["Latitude"]),
+                f'"{new_address}"',
+                f'"{latitude}"',
+                f'"{longitude}"',
+                float(longitude),
+                float(latitude),
                 site_number
             ))
             
