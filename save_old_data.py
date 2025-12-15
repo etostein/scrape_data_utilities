@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 script_dir = os.path.dirname(os.path.abspath(__file__))
 
 # Load database credentials
-env_path = os.path.join(script_dir, 'prod.env')
+env_path = os.path.join(script_dir, 'preprod.env')
 load_dotenv(env_path)
 
 # Build the full path to site_ids.csv

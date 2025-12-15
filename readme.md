@@ -2,7 +2,7 @@ README
 Overview
 
 This project collects latitude and longitude data for specific site IDs.
-To run the script successfully, you must first add your Work Order (WO) numbers to the site_ids.csv file.
+To run the script successfully, you must first add your Work Order (WO) numbers to the site_ids.csv file , this script will add 00 at the beginning of the workorders works specifically for fortis
 
 Step 1 — Add WO Numbers to site_ids.csv
 
@@ -27,9 +27,9 @@ Retrieve their coordinates
 
 Output the latitude and longitude values accordingly in a file named:updated_collection.csv
 
-Step 3 - Run Save_old_data script
+Step 3 - Run Save_old_data script (make sure to specify which env you are targetting preprod or prod)
 This will collect the data of the workorders to update to have a backup
 
-Step 4 - Run update_db
+Step 4 - Run update_db (make sure to specify which env you are targetting preprod or prod)
 make sure script targets the right DB 
-This will update new position and address to the work orders in the file updated_collection.csv
+This will update new position and address to the work orders in the file updated_collection.csv (will skip workorders in status -7)

@@ -13,7 +13,7 @@ csv_path = os.path.join(script_dir, 'updated_collection.csv')
 
 old_csv_path = os.path.join(script_dir, 'old_address.csv')
 # Load env file from script directory
-env_path = os.path.join(script_dir, 'prod.env')
+env_path = os.path.join(script_dir, 'preprod.env')
 
 print(f"Looking for env file at: {env_path}")
 load_dotenv(env_path)
@@ -37,6 +37,31 @@ conn = psycopg2.connect(
 
 cursor = conn.cursor()
 
+# NEW SECTION: Check for WorkOrders that will be skipped (StatusWebId = -7)
+print("\nChecking for WorkOrders with StatusWebId = -7...")
+with open(csv_path, 'r') as f:
+    reader = csv.DictReader(f)
+    site_numbers = [row['Site Number'].strip().zfill(13) for row in reader]
+
+cursor.execute("""
+    SELECT "JsonData"->'WorkOrder'->>'WorkOrderId' as work_order_id
+    FROM public."WorkOrder"
+    WHERE "JsonData"->'WorkOrder'->>'WorkOrderId' = ANY(%s)
+    AND "StatusWebId" = -7
+""", (site_numbers,))
+
+skipped_work_orders = cursor.fetchall()
+if skipped_work_orders:
+    print(f"\nWill skip {len(skipped_work_orders)} WorkOrders with StatusWebId = -7:")
+    for wo in skipped_work_orders:
+        print(f"  - {wo[0]}")
+else:
+    print("No WorkOrders with StatusWebId = -7 found")
+print()
+# END NEW SECTION
+
+
+
 # Read CSV
 print(f"Reading from: {csv_path}")
 
@@ -52,9 +77,9 @@ with open(csv_path, 'r') as f:
     for row in reader:
         total_rows += 1
         try:
+            site_number = row['Site Number'].strip().zfill(13)
             old_address = old_addresses.get(site_number, '')
             new_address = row["Full Address"]
-            site_number = row['Site Number'].strip().zfill(13)
             latitude = row['Latitude']
             longitude = row['Longitude']
 
@@ -77,6 +102,7 @@ with open(csv_path, 'r') as f:
                   "Position" = ST_SetSRID(ST_MakePoint(%s, %s), 4326),
                    "PositionSRID" = 4326                 
                 WHERE "JsonData"->'WorkOrder'->>'WorkOrderId' = %s
+                and "StatusWebId" != -7
             """, (
                 f'"{new_address}"',
                 f'"{latitude}"',
